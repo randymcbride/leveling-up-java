@@ -3,6 +3,9 @@ package com.rmcbride.levelingupjava.concurrency;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+
 public class ConcurrencyTest {
   
   // utility function
@@ -111,4 +114,39 @@ public class ConcurrencyTest {
     threadMessage("Sending interrupt");
     t.interrupt();
   }
+  
+  @Test
+  public void thread_interference_and_memory_consistency_errors() throws InterruptedException {
+    // https://docs.oracle.com/javase/tutorial/essential/concurrency/interfere.html
+    // https://docs.oracle.com/javase/tutorial/essential/concurrency/memconsist.html
+    
+    // when operating in a single thread it is safe to assume that state will behave as expected
+    Counter counterInSingleThread = new Counter();
+    for (var i = 0; i < 100000; i++) {
+      counterInSingleThread.increment();
+    }
+    
+    assertEquals(100000, counterInSingleThread.getValue());
+    
+    // but Interference occurs when more than one thread are operating on the same state at the same time. There is no
+    // guarantee that the state will behave as expected because the threads interfere with each other.
+    Counter multithreadedCounter = new Counter();
+    Thread t1 = new Thread(() -> {
+      for (var i = 0; i < 100000; i++) {
+        multithreadedCounter.increment();
+      }
+    });
+    Thread t2 = new Thread(() -> {
+      for (var i = 0; i < 100000; i++) {
+        multithreadedCounter.increment();
+      }
+    });
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+    
+    assertNotEquals(200000, multithreadedCounter.getValue());
+  }
+  
 }
