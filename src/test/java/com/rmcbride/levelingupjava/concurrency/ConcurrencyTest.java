@@ -149,4 +149,32 @@ public class ConcurrencyTest {
     assertNotEquals(200000, multithreadedCounter.getValue());
   }
   
+  @Test
+  public void synchronized_methods() throws InterruptedException {
+    // https://docs.oracle.com/javase/tutorial/essential/concurrency/syncmeth.html
+    
+    // synchronized methods are a simple way to prevent interference. The synchronized keyword can be applied to a
+    // method to prevent interference.
+    SynchronizedCounter counter = new SynchronizedCounter();
+    
+    Thread t1 = new Thread(() -> {
+      for (var i = 0; i < 100000; i++) {
+        // look at the implementation of the increment method. Notice the synchronized keyword in the method signature.
+        counter.increment();
+      }
+    });
+    Thread t2 = new Thread(() -> {
+      for (var i = 0; i < 100000; i++) {
+        counter.increment();
+      }
+    });
+    
+    t1.start();
+    t2.start();
+    t1.join();
+    t2.join();
+    
+    assertEquals(200000, counter.getValue());
+  }
+  
 }
